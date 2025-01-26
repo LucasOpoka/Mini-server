@@ -8,13 +8,13 @@
 typedef struct s_client
 {
     int     id;
-    char    msg[100000];
+    char    msg[400000];
 }   t_client;
 
 t_client    clients[2048];
 fd_set      read_set, write_set, current;
-int         maxfd = 0, count = 0, ret;
-char        send_buffer[120000], recv_buffer[120000];
+int         maxfd, ret, count = 0;
+char        send_buffer[400000], recv_buffer[400000];
 
 void err(char *msg)
 {
@@ -28,8 +28,7 @@ void    send_to_all(int except)
 {
     for (int fd = 0; fd <= maxfd; fd++)
     {
-        if  (FD_ISSET(fd, &write_set) && fd != except)
-            if (send(fd, send_buffer, strlen(send_buffer), 0) == -1)
+        if  (FD_ISSET(fd, &write_set) && fd != except && send(fd, send_buffer, strlen(send_buffer), 0) == -1)
                 err(NULL);
     }
 }
@@ -41,9 +40,9 @@ int     main(int ac, char **av)
 
     struct sockaddr_in  serveraddr;
     socklen_t len = sizeof(struct sockaddr_in);
-    int serverfd = socket(AF_INET, SOCK_STREAM, 0);
+    int serverfd = maxfd = socket(AF_INET, SOCK_STREAM, 0);
     if (serverfd == -1) err(NULL);
-    maxfd = serverfd;
+
 
     FD_ZERO(&current);
     FD_SET(serverfd, &current);
@@ -87,6 +86,7 @@ int     main(int ac, char **av)
             {
                 sprintf(send_buffer, "server: client %d just left\n", clients[fd].id);
                 send_to_all(fd);
+                bzero(clients[fd].msg, strlen(clients[fd].msg));
                 FD_CLR(fd, &current);
                 close(fd);
                 break;
@@ -94,7 +94,7 @@ int     main(int ac, char **av)
 
             else
             {
-                for (int i = 0, j = 0; i < ret; i++)
+                for (int i = 0, j = strlen(clients[fd].msg); i < ret; i++)
                 {
                     if (recv_buffer[i] != '\n')
                         clients[fd].msg[j++] = recv_buffer[i];
