@@ -11,7 +11,7 @@ typedef struct s_client
     char    msg[350000];
 }   t_client;
 
-t_client    clients[2048];
+t_client    clients[2042];
 fd_set      read_set, write_set, current;
 int         maxfd, ret, count = 0;
 char        send_buffer[400000], recv_buffer[400000];
